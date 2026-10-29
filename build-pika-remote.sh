@@ -209,8 +209,6 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 
     const/4 v0, -0x1
     iput v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->curSec:I
-    const/4 v0, 0x0
-    iput-boolean v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->controlsVisible:Z
 
     invoke-virtual {p0}, Landroid/accessibilityservice/AccessibilityService;->getRootInActiveWindow()Landroid/view/accessibility/AccessibilityNodeInfo;
     move-result-object v0
@@ -229,7 +227,7 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     iget v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeenCurSec:I
     if-ltz v1, :cond_save_seen
     sub-int v2, v0, v1
-    const/4 v3, 0x2
+    const/4 v3, 0x5
     if-ge v2, v3, :cond_playing_tick
     if-gez v2, :cond_check_paused
 
@@ -246,8 +244,7 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 
     const/4 v0, 0x0
     iput-boolean v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->isPaused:Z
-    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
-    move-result-wide v0
+    const-wide/16 v0, 0x0
     iput-wide v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
 
     const/16 v0, 0x3c2
@@ -261,17 +258,14 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 
     invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
     move-result-wide v0
-    iget-wide v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
+    iget-wide v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeekMs:J
     sub-long v2, v0, v2
     iput-wide v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
 
-    iget-boolean v4, p0, Lcom/mohit/pikaremote/PikaRemoteService;->controlsVisible:Z
-    if-nez v4, :cond_awake_pause
     const-wide/16 v4, 0xfa0
     cmp-long v2, v2, v4
     if-gez v2, :cond_hidden_pause
 
-    :cond_awake_pause
     const/16 v0, 0x3c
     const/16 v1, 0x402
     invoke-direct {p0, v0, v1}, Lcom/mohit/pikaremote/PikaRemoteService;->tap(II)V
@@ -720,16 +714,14 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     invoke-direct {p0}, Lcom/mohit/pikaremote/PikaRemoteService;->isPikaWebPlayer()Z
     move-result v1
     if-nez v1, :cond_in_web
-    const-string v2, "PikaRemote"
-    const-string v3, "not pika web player"
-    invoke-static {v2, v3}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
     const/4 v0, 0x0
+    iput-boolean v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->isPaused:Z
+    const/4 v1, -0x1
+    iput v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->targetSec:I
+    iput v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeenCurSec:I
     return v0
 
     :cond_in_web
-    const-string v2, "PikaRemote"
-    const-string v3, "pika web player detected"
-    invoke-static {v2, v3}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
     invoke-virtual {p1}, Landroid/view/KeyEvent;->getAction()I
     move-result v1
     const/4 v2, 0x1
@@ -769,23 +761,15 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     return v2
 
     :cond_check_awake
-    const/4 v3, 0x0
-    iput-boolean v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->controlsVisible:Z
-    invoke-virtual {p0}, Landroid/accessibilityservice/AccessibilityService;->getRootInActiveWindow()Landroid/view/accessibility/AccessibilityNodeInfo;
-    move-result-object v3
-    invoke-direct {p0, v3}, Lcom/mohit/pikaremote/PikaRemoteService;->scanTree(Landroid/view/accessibility/AccessibilityNodeInfo;)V
-
     invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
     move-result-wide v3
     iget-wide v5, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
     sub-long v5, v3, v5
     iput-wide v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
 
-    iget-boolean v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->controlsVisible:Z
-    if-nez v3, :cond_seek_awake
     iget-boolean v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->isPaused:Z
     if-nez v3, :cond_seek_awake
-    const-wide/16 v3, 0xfa0
+    const-wide/16 v3, 0x1388
     cmp-long v3, v5, v3
     if-gez v3, :cond_seek_wake_first
 
