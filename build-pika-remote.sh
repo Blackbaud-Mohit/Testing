@@ -90,9 +90,12 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 .field private curSec:I
 .field private fallbackX:I
 .field private handler:Landroid/os/Handler;
+.field private isPaused:Z
+.field private lastControlActiveMs:J
 .field private lastSeekMs:J
 .field private lastSeenCurSec:I
 .field private pendingAction:I
+.field private pendingDeltaSec:I
 .field private targetSec:I
 .field private totSec:I
 .field private trackLeft:I
@@ -187,14 +190,14 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 .method private scheduleClearSelection()V
     .locals 4
 
-    const/4 v0, 0x2
+    const/4 v0, 0x3
     iput v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingAction:I
 
     iget-object v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->handler:Landroid/os/Handler;
     if-eqz v0, :cond_done
 
     invoke-virtual {v0, p0}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
-    const-wide/16 v1, 0x118
+    const-wide/16 v1, 0x4b0
     invoke-virtual {v0, p0, v1, v2}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
     :cond_done
@@ -202,8 +205,10 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 .end method
 
 .method private performPlayPause()V
-    .locals 4
+    .locals 6
 
+    const/4 v0, -0x1
+    iput v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->curSec:I
     const/4 v0, 0x0
     iput-boolean v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->controlsVisible:Z
 
@@ -211,22 +216,68 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     move-result-object v0
     invoke-direct {p0, v0}, Lcom/mohit/pikaremote/PikaRemoteService;->scanTree(Landroid/view/accessibility/AccessibilityNodeInfo;)V
 
-    iget-boolean v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->controlsVisible:Z
-    if-eqz v0, :cond_hidden
-
     const/4 v0, 0x0
     iput v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingAction:I
+    iput v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingDeltaSec:I
     iget-object v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->handler:Landroid/os/Handler;
-    if-eqz v0, :cond_tap_center
+    if-eqz v0, :cond_after_cancel
     invoke-virtual {v0, p0}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    :cond_tap_center
+    :cond_after_cancel
+    iget v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->curSec:I
+    if-ltz v0, :cond_check_paused
+    iget v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeenCurSec:I
+    if-ltz v1, :cond_save_seen
+    sub-int v2, v0, v1
+    const/4 v3, 0x2
+    if-ge v2, v3, :cond_playing_tick
+    if-gez v2, :cond_check_paused
+
+    :cond_playing_tick
+    const/4 v2, 0x0
+    iput-boolean v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->isPaused:Z
+
+    :cond_save_seen
+    iput v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeenCurSec:I
+
+    :cond_check_paused
+    iget-boolean v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->isPaused:Z
+    if-eqz v0, :cond_currently_playing
+
+    const/4 v0, 0x0
+    iput-boolean v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->isPaused:Z
+    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
+    move-result-wide v0
+    iput-wide v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
+
     const/16 v0, 0x3c2
     const/16 v1, 0x21c
     invoke-direct {p0, v0, v1}, Lcom/mohit/pikaremote/PikaRemoteService;->tap(II)V
     return-void
 
-    :cond_hidden
+    :cond_currently_playing
+    const/4 v0, 0x1
+    iput-boolean v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->isPaused:Z
+
+    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
+    move-result-wide v0
+    iget-wide v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
+    sub-long v2, v0, v2
+    iput-wide v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
+
+    iget-boolean v4, p0, Lcom/mohit/pikaremote/PikaRemoteService;->controlsVisible:Z
+    if-nez v4, :cond_awake_pause
+    const-wide/16 v4, 0xfa0
+    cmp-long v2, v2, v4
+    if-gez v2, :cond_hidden_pause
+
+    :cond_awake_pause
+    const/16 v0, 0x3c
+    const/16 v1, 0x402
+    invoke-direct {p0, v0, v1}, Lcom/mohit/pikaremote/PikaRemoteService;->tap(II)V
+    return-void
+
+    :cond_hidden_pause
     const/16 v0, 0x3c2
     const/16 v1, 0x21c
     invoke-direct {p0, v0, v1}, Lcom/mohit/pikaremote/PikaRemoteService;->tap(II)V
@@ -235,8 +286,7 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     iput v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingAction:I
     iget-object v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->handler:Landroid/os/Handler;
     if-eqz v0, :cond_done
-    invoke-virtual {v0, p0}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
-    const-wide/16 v2, 0x96
+    const-wide/16 v2, 0xa0
     invoke-virtual {v0, p0, v2, v3}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
     :cond_done
@@ -513,6 +563,7 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 
     invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
     move-result-wide v0
+    iput-wide v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
 
     iget v6, p0, Lcom/mohit/pikaremote/PikaRemoteService;->trackLeft:I
     iget v7, p0, Lcom/mohit/pikaremote/PikaRemoteService;->trackRight:I
@@ -524,14 +575,6 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     iget v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->totSec:I
     if-lez v2, :cond_fallback
 
-    iget v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->curSec:I
-    if-ltz v3, :check_target
-    iget v4, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeenCurSec:I
-    if-eq v3, v4, :check_target
-    iput v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeenCurSec:I
-    goto :cond_have_base
-
-    :check_target
     iget v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->targetSec:I
     if-ltz v3, :cond_use_cur
     iget-wide v4, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeekMs:J
@@ -544,6 +587,7 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     :cond_use_cur
     iget v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->curSec:I
     if-ltz v3, :cond_use_px
+    iput v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeenCurSec:I
     goto :cond_have_base
 
     :cond_use_px
@@ -611,16 +655,29 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     iput v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingAction:I
 
     const/4 v1, 0x1
-    if-ne v0, v1, :cond_check_clear
+    if-ne v0, v1, :cond_check_pending_seek
 
-    const/16 v1, 0x3c2
-    const/16 v2, 0x21c
+    const/16 v1, 0x3c
+    const/16 v2, 0x402
     invoke-direct {p0, v1, v2}, Lcom/mohit/pikaremote/PikaRemoteService;->tap(II)V
     return-void
 
-    :cond_check_clear
+    :cond_check_pending_seek
     const/4 v1, 0x2
+    if-ne v0, v1, :cond_check_clear
+
+    iget v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingDeltaSec:I
+    const/4 v2, 0x0
+    iput v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingDeltaSec:I
+    invoke-direct {p0, v1}, Lcom/mohit/pikaremote/PikaRemoteService;->performSeek(I)V
+    return-void
+
+    :cond_check_clear
+    const/4 v1, 0x3
     if-ne v0, v1, :cond_done
+
+    iget-boolean v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->isPaused:Z
+    if-nez v1, :cond_done
 
     const/16 v1, 0x3c2
     const/16 v2, 0x12c
@@ -631,7 +688,7 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 .end method
 
 .method public onKeyEvent(Landroid/view/KeyEvent;)Z
-    .locals 4
+    .locals 8
 
     invoke-virtual {p1}, Landroid/view/KeyEvent;->getKeyCode()I
     move-result v0
@@ -702,7 +759,56 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     const/16 v1, -0xa
 
     :cond_pos
+    iget v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingAction:I
+    const/4 v4, 0x2
+    if-ne v3, v4, :cond_check_awake
+
+    iget v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingDeltaSec:I
+    add-int/2addr v3, v1
+    iput v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingDeltaSec:I
+    return v2
+
+    :cond_check_awake
+    const/4 v3, 0x0
+    iput-boolean v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->controlsVisible:Z
+    invoke-virtual {p0}, Landroid/accessibilityservice/AccessibilityService;->getRootInActiveWindow()Landroid/view/accessibility/AccessibilityNodeInfo;
+    move-result-object v3
+    invoke-direct {p0, v3}, Lcom/mohit/pikaremote/PikaRemoteService;->scanTree(Landroid/view/accessibility/AccessibilityNodeInfo;)V
+
+    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
+    move-result-wide v3
+    iget-wide v5, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
+    sub-long v5, v3, v5
+    iput-wide v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
+
+    iget-boolean v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->controlsVisible:Z
+    if-nez v3, :cond_seek_awake
+    iget-boolean v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->isPaused:Z
+    if-nez v3, :cond_seek_awake
+    const-wide/16 v3, 0xfa0
+    cmp-long v3, v5, v3
+    if-gez v3, :cond_seek_wake_first
+
+    :cond_seek_awake
     invoke-direct {p0, v1}, Lcom/mohit/pikaremote/PikaRemoteService;->performSeek(I)V
+    return v2
+
+    :cond_seek_wake_first
+    const/4 v3, 0x2
+    iput v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingAction:I
+    iput v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->pendingDeltaSec:I
+
+    const/16 v3, 0x3c2
+    const/16 v4, 0x21c
+    invoke-direct {p0, v3, v4}, Lcom/mohit/pikaremote/PikaRemoteService;->tap(II)V
+
+    iget-object v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->handler:Landroid/os/Handler;
+    if-eqz v3, :cond_seek_done
+    invoke-virtual {v3, p0}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
+    const-wide/16 v4, 0xc8
+    invoke-virtual {v3, p0, v4, v5}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
+
+    :cond_seek_done
     return v2
 .end method
 EOF
@@ -710,18 +816,20 @@ EOF
 echo "==> Building APK with apktool ..."
 "$APKTOOL" b "$WORK_DIR/src" -o "$WORK_DIR/PikaRemoteHelper-unsigned.apk"
 
-echo "==> Generating signing key and signing APK ..."
-KEYSTORE="$WORK_DIR/debug.keystore"
-rm -f "$KEYSTORE"
-keytool -genkeypair -v \
-  -keystore "$KEYSTORE" \
-  -storepass android \
-  -keypass android \
-  -alias androiddebugkey \
-  -keyalg RSA \
-  -keysize 2048 \
-  -validity 10000 \
-  -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
+echo "==> Signing APK with persistent key ..."
+mkdir -p "$HOME/.android"
+KEYSTORE="$HOME/.android/pika-debug.keystore"
+if [ ! -f "$KEYSTORE" ]; then
+  keytool -genkeypair -v \
+    -keystore "$KEYSTORE" \
+    -storepass android \
+    -keypass android \
+    -alias androiddebugkey \
+    -keyalg RSA \
+    -keysize 2048 \
+    -validity 10000 \
+    -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
+fi
 
 cp "$WORK_DIR/PikaRemoteHelper-unsigned.apk" "$WORK_DIR/PikaRemoteHelper.apk"
 jarsigner -sigalg SHA256withRSA -digestalg SHA-256 \
@@ -732,17 +840,17 @@ jarsigner -sigalg SHA256withRSA -digestalg SHA-256 \
 
 echo "==> Installing PikaRemoteHelper.apk on Mi TV Box ..."
 "$ADB" connect 192.168.1.128:5555 || true
-"$ADB" uninstall com.mohit.pikaremote >/dev/null 2>&1 || true
-"$ADB" install -r "$WORK_DIR/PikaRemoteHelper.apk"
+"$ADB" install -r "$WORK_DIR/PikaRemoteHelper.apk" || (
+  "$ADB" uninstall com.mohit.pikaremote >/dev/null 2>&1 || true
+  "$ADB" install -r "$WORK_DIR/PikaRemoteHelper.apk"
+)
 
-echo "==> Enabling PikaRemoteService in Android Accessibility Settings ..."
+echo "==> Rebinding PikaRemoteService in Android Accessibility Settings ..."
 SVC="com.mohit.pikaremote/com.mohit.pikaremote.PikaRemoteService"
-CUR=$("$ADB" shell settings get secure enabled_accessibility_services | tr -d '\r')
-if [ "$CUR" = "null" ] || [ -z "$CUR" ]; then
-  "$ADB" shell settings put secure enabled_accessibility_services "$SVC"
-elif [[ "$CUR" != *"$SVC"* ]]; then
-  "$ADB" shell settings put secure enabled_accessibility_services "$CUR:$SVC"
-fi
+"$ADB" shell settings put secure enabled_accessibility_services '""'
+"$ADB" shell settings put secure accessibility_enabled 0
+sleep 1
+"$ADB" shell settings put secure enabled_accessibility_services "$SVC"
 "$ADB" shell settings put secure accessibility_enabled 1
 
 echo ""
