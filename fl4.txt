@@ -1,0 +1,61 @@
+package defpackage;
+
+import android.net.http.SslError;
+import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import com.app.bluesun.R;
+import com.app.bluesun.view.Web;
+
+/* JADX INFO: loaded from: classes.dex */
+public final class fl4 extends WebViewClient {
+    public final /* synthetic */ Web Wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww;
+
+    public fl4(Web web) {
+        this.Wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww = web;
+    }
+
+    @Override // android.webkit.WebViewClient
+    public final void onPageFinished(WebView webView, String str) {
+        super.onPageFinished(webView, str);
+        int i = Web.Kkkkkkkkkkkkkkkk;
+        this.Wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww.Wwwwwwwwwwwwwwwwwwwwwwwwwww();
+    }
+
+    @Override // android.webkit.WebViewClient
+    public final void onReceivedSslError(WebView webView, SslErrorHandler sslErrorHandler, SslError sslError) {
+        sslErrorHandler.proceed();
+    }
+
+    @Override // android.webkit.WebViewClient
+    public final boolean shouldOverrideUrlLoading(WebView webView, WebResourceRequest webResourceRequest) {
+        String string = webResourceRequest.getUrl().toString();
+        Web web = this.Wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww;
+        if (string.startsWith(web.getString(R.string.intent_scheme)) || string.startsWith(web.getString(R.string.market_scheme))) {
+            return true;
+        }
+        webView.loadUrl(string);
+        return true;
+    }
+
+    @Override // android.webkit.WebViewClient
+    public final boolean shouldOverrideUrlLoading(WebView webView, String str) {
+        Web web = this.Wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww;
+        if (str.startsWith(web.getString(R.string.intent_scheme)) || str.startsWith(web.getString(R.string.market_scheme))) {
+            return true;
+        }
+        webView.loadUrl(str);
+        return true;
+    }
+
+    @Override // android.webkit.WebViewClient
+    public final void onReceivedError(WebView webView, WebResourceRequest webResourceRequest, WebResourceError webResourceError) {
+    }
+
+    @Override // android.webkit.WebViewClient
+    public final void onReceivedHttpError(WebView webView, WebResourceRequest webResourceRequest, WebResourceResponse webResourceResponse) {
+    }
+}
