@@ -1,0 +1,14 @@
+=== 1. APK BUILT? ===
+-rw-r--r--@ 1 mohit  staff  4999 29 Oct 20:35 /Users/mohit/Downloads/pika-remote-helper/PikaRemoteHelper-unsigned.apk
+-rw-r--r--@ 1 mohit  staff  7258 29 Oct 20:35 /Users/mohit/Downloads/pika-remote-helper/PikaRemoteHelper.apk
+
+=== 2. INSTALLED ON TV? ===
+package:com.mohit.pikaremote
+
+=== 3. ACCESSIBILITY SETTINGS ===
+com.mohit.pikaremote/com.mohit.pikaremote.PikaRemoteService
+1
+
+=== 4. IS SERVICE BOUND/RUNNING? ===
+
+=== 5. CRASHES / VERIFY ERRORS ===
