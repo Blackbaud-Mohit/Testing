@@ -124,6 +124,10 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 
     invoke-super {p0}, Landroid/accessibilityservice/AccessibilityService;->onServiceConnected()V
 
+    const-string v0, "PikaRemote"
+    const-string v1, "service connected"
+    invoke-static {v0, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+
     invoke-static {}, Landroid/os/Looper;->getMainLooper()Landroid/os/Looper;
     move-result-object v0
     new-instance v1, Landroid/os/Handler;
@@ -496,7 +500,7 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 .end method
 
 .method private performSeek(I)V
-    .locals 8
+    .locals 10
 
     const/4 v0, -0x1
     iput v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->curSec:I
@@ -532,8 +536,8 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     if-ltz v3, :cond_use_cur
     iget-wide v4, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeekMs:J
     sub-long v4, v0, v4
-    const-wide/16 v6, 0xfa0
-    cmp-long v4, v4, v6
+    const-wide/16 v8, 0xfa0
+    cmp-long v4, v4, v8
     if-gez v4, :cond_use_cur
     goto :cond_have_base
 
@@ -632,6 +636,11 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     invoke-virtual {p1}, Landroid/view/KeyEvent;->getKeyCode()I
     move-result v0
 
+    const-string v1, "PikaRemote"
+    invoke-static {v0}, Ljava/lang/String;->valueOf(I)Ljava/lang/String;
+    move-result-object v2
+    invoke-static {v1, v2}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+
     const/16 v1, 0x17
     if-eq v0, v1, :cond_relevant
     const/16 v1, 0x42
@@ -654,10 +663,16 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     invoke-direct {p0}, Lcom/mohit/pikaremote/PikaRemoteService;->isPikaWebPlayer()Z
     move-result v1
     if-nez v1, :cond_in_web
+    const-string v2, "PikaRemote"
+    const-string v3, "not pika web player"
+    invoke-static {v2, v3}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
     const/4 v0, 0x0
     return v0
 
     :cond_in_web
+    const-string v2, "PikaRemote"
+    const-string v3, "pika web player detected"
+    invoke-static {v2, v3}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
     invoke-virtual {p1}, Landroid/view/KeyEvent;->getAction()I
     move-result v1
     const/4 v2, 0x1
