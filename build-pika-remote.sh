@@ -580,14 +580,14 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     iput v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->fallbackX:I
 
     :cond_children
+    invoke-virtual {p1}, Landroid/view/accessibility/AccessibilityNodeInfo;->refresh()Z
     invoke-virtual {p1}, Landroid/view/accessibility/AccessibilityNodeInfo;->getChildCount()I
     move-result v1
     const/4 v2, 0x0
 
     :loop_children
     if-ge v2, v1, :done_scan
-    const/4 v3, 0x1
-    invoke-virtual {p1, v2, v3}, Landroid/view/accessibility/AccessibilityNodeInfo;->getChild(II)Landroid/view/accessibility/AccessibilityNodeInfo;
+    invoke-virtual {p1, v2}, Landroid/view/accessibility/AccessibilityNodeInfo;->getChild(I)Landroid/view/accessibility/AccessibilityNodeInfo;
     move-result-object v3
     invoke-direct {p0, v3}, Lcom/mohit/pikaremote/PikaRemoteService;->scanTree(Landroid/view/accessibility/AccessibilityNodeInfo;)V
     add-int/lit8 v2, v2, 0x1
