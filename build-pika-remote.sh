@@ -696,6 +696,7 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 
     :cond_save_est
     iput v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->targetSec:I
+    iget v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->curSec:I
     iput v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastScanCurSec:I
     iput-wide v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastScanMs:J
     return-void
@@ -757,7 +758,6 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 .method private tapSeekBarAtTarget(J)V
     .locals 7
 
-    iput-wide p1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastScanMs:J
     iget v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->trackLeft:I
     iget v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->trackRight:I
     sub-int v2, v1, v0
@@ -909,7 +909,7 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 
     iget-wide v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeekMs:J
     sub-long v2, p2, v2
-    const-wide/16 v4, 0xdac
+    const-wide/16 v4, 0x1770
     cmp-long v2, v2, v4
     if-gez v2, :cond_do_fresh_scan
     goto :cond_have_session
@@ -943,6 +943,11 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     const/4 v1, 0x4
     if-ne v0, v1, :cond_done
 
+    iget v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->holdTicks:I
+    if-lez v0, :cond_after_commit_tap
+    invoke-direct {p0, p1, p2}, Lcom/mohit/pikaremote/PikaRemoteService;->tapSeekBarAtTarget(J)V
+
+    :cond_after_commit_tap
     invoke-direct {p0}, Lcom/mohit/pikaremote/PikaRemoteService;->scheduleClearSelection()V
 
     :cond_done
@@ -1044,15 +1049,11 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     iput v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->holdTicks:I
 
     iget v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->holdDir:I
-    const/4 v3, 0x4
+    const/4 v3, 0x6
+    if-le v1, v3, :cond_apply_hold
+    const/16 v3, 0xe
     if-le v1, v3, :cond_step_2x
-    const/16 v3, 0xa
-    if-le v1, v3, :cond_step_3x
 
-    mul-int/lit8 v2, v2, 0x6
-    goto :cond_apply_hold
-
-    :cond_step_3x
     mul-int/lit8 v2, v2, 0x3
     goto :cond_apply_hold
 
@@ -1065,9 +1066,13 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     iput-wide v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastControlActiveMs:J
     iput-wide v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeekMs:J
     invoke-direct {p0, v2}, Lcom/mohit/pikaremote/PikaRemoteService;->applyDeltaToTarget(I)V
+    iget v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->holdTicks:I
+    and-int/lit8 v2, v2, 0x1
+    if-nez v2, :cond_skip_mid_tap
     invoke-direct {p0, v0, v1}, Lcom/mohit/pikaremote/PikaRemoteService;->tapSeekBarAtTarget(J)V
 
-    const-wide/16 v0, 0xfa
+    :cond_skip_mid_tap
+    const-wide/16 v0, 0x118
     invoke-direct {p0, v0, v1}, Lcom/mohit/pikaremote/PikaRemoteService;->scheduleHoldTick(J)V
 
     :cond_done
