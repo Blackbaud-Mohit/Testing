@@ -561,15 +561,15 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     const/16 v3, 0x414
     if-gt v2, v3, :cond_children
 
-    const/16 v2, 0xf0
+    const/16 v2, 0x11c
     if-lt v1, v2, :cond_children
-    const/16 v2, 0x190
+    const/16 v2, 0x140
     if-gt v1, v2, :cond_children
 
     iget v2, v0, Landroid/graphics/Rect;->right:I
-    const/16 v3, 0x5dc
+    const/16 v3, 0x610
     if-lt v2, v3, :cond_check_fill
-    const/16 v3, 0x690
+    const/16 v3, 0x650
     if-gt v2, v3, :cond_check_fill
     iput v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->trackLeft:I
     iput v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->trackRight:I
@@ -786,6 +786,8 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     if-ltz v4, :cond_fallback
 
     mul-int v5, v4, v2
+    div-int/lit8 v6, v3, 0x2
+    add-int/2addr v5, v6
     div-int/2addr v5, v3
     add-int/2addr v5, v0
     iput v5, p0, Lcom/mohit/pikaremote/PikaRemoteService;->fallbackX:I
@@ -894,21 +896,13 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 
     :cond_check_burst
     iget v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->targetSec:I
-    if-ltz v0, :cond_scan_visibility
+    if-ltz v0, :cond_wake_first
 
     iget-wide v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->lastSeekMs:J
     sub-long v2, p2, v2
-    const-wide/16 v4, 0x960
+    const-wide/16 v4, 0x9c4
     cmp-long v2, v2, v4
-    if-gez v2, :cond_scan_visibility
-    goto :cond_have_session
-
-    :cond_scan_visibility
-    invoke-direct {p0}, Lcom/mohit/pikaremote/PikaRemoteService;->initTargetFromScan()V
-    iget v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->curSec:I
-    if-gez v0, :cond_have_session
-    iget v0, p0, Lcom/mohit/pikaremote/PikaRemoteService;->thumbX:I
-    if-lez v0, :cond_wake_first
+    if-gez v2, :cond_wake_first
     goto :cond_have_session
 
     :cond_wake_first
