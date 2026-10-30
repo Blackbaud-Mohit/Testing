@@ -231,7 +231,7 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
 
     new-instance v0, Landroid/accessibilityservice/GestureDescription$StrokeDescription;
     const-wide/16 v2, 0x0
-    const-wide/16 v4, 0x19
+    const-wide/16 v4, 0x3c
     invoke-direct/range {v0 .. v5}, Landroid/accessibilityservice/GestureDescription$StrokeDescription;-><init>(Landroid/graphics/Path;JJ)V
 
     new-instance v6, Landroid/accessibilityservice/GestureDescription$Builder;
@@ -551,12 +551,16 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     goto :cond_children
 
     :cond_check_track
+    const/16 v3, 0x3f2
+    if-lt v2, v3, :cond_children
     const/16 v3, 0x3fe
-    if-ne v2, v3, :cond_children
+    if-gt v2, v3, :cond_children
 
     iget v2, v0, Landroid/graphics/Rect;->bottom:I
     const/16 v3, 0x404
-    if-ne v2, v3, :cond_children
+    if-lt v2, v3, :cond_children
+    const/16 v3, 0x414
+    if-gt v2, v3, :cond_children
 
     const/16 v2, 0xf0
     if-lt v1, v2, :cond_children
@@ -573,14 +577,14 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     goto :cond_children
 
     :cond_check_fill
+    iget v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->trackLeft:I
+    if-ne v1, v3, :cond_children
     if-lt v2, v1, :cond_children
     iget v3, p0, Lcom/mohit/pikaremote/PikaRemoteService;->trackRight:I
     if-ge v2, v3, :cond_children
-    iput v1, p0, Lcom/mohit/pikaremote/PikaRemoteService;->trackLeft:I
     iput v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->fallbackX:I
 
     :cond_children
-    invoke-virtual {p1}, Landroid/view/accessibility/AccessibilityNodeInfo;->refresh()Z
     invoke-virtual {p1}, Landroid/view/accessibility/AccessibilityNodeInfo;->getChildCount()I
     move-result v1
     const/4 v2, 0x0
@@ -793,18 +797,26 @@ cat > "$WORK_DIR/src/smali/com/mohit/pikaremote/PikaRemoteService.smali" << 'EOF
     const-string v2, "] x="
     invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
     invoke-virtual {v0, v5}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
+    const-string v2, " th="
+    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    iget v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->thumbX:I
+    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
+    const-string v2, " r="
+    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    iget v2, p0, Lcom/mohit/pikaremote/PikaRemoteService;->scanRetries:I
+    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
     invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
     move-result-object v0
     const-string v2, "PikaRemote"
     invoke-static {v2, v0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    const/16 v6, 0x403
+    const/16 v6, 0x401
     invoke-direct {p0, v5, v6}, Lcom/mohit/pikaremote/PikaRemoteService;->tap(II)V
     return-void
 
     :cond_fallback
     iget v5, p0, Lcom/mohit/pikaremote/PikaRemoteService;->fallbackX:I
-    const/16 v6, 0x403
+    const/16 v6, 0x401
     invoke-direct {p0, v5, v6}, Lcom/mohit/pikaremote/PikaRemoteService;->tap(II)V
     return-void
 .end method
